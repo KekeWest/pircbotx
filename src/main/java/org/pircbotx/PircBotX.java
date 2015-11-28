@@ -177,55 +177,59 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 	 * @throws IrcException
 	 */
 	public void startBot() throws IOException, IrcException {
-		//Begin magic
-		reconnectStopped = false;
-		do {
-			//Try to connect to the server, grabbing any exceptions
-			LinkedHashMap<InetSocketAddress, Exception> connectExceptions = Maps.newLinkedHashMap();
-			try {
-				connectAttemptTotal++;
-				connectAttempts++;
-				connectExceptions.putAll(connect());
-			} catch (Exception e) {
-				//Initial connect exceptions are returned in the map, this is a more serious error
-				log.error("Exception encountered during connect", e);
-				connectExceptions.put(new InetSocketAddress(serverHostname, serverPort), e);
-
-				if (!configuration.isAutoReconnect())
-					throw new RuntimeException("Exception encountered during connect", e);
-			} finally {
-				if (!connectExceptions.isEmpty())
-					Utils.dispatchEvent(this, new ConnectAttemptFailedEvent(this,
-							configuration.getAutoReconnectAttempts() - connectAttempts,
-							ImmutableMap.copyOf(connectExceptions)));
-
-				//Cleanup if not already called
-				synchronized (stateLock) {
-					if (state != State.DISCONNECTED)
-						shutdown();
-				}
-			}
-
-			//No longer connected to the server
-			if (!configuration.isAutoReconnect())
-				return;
-			if (reconnectStopped) {
-				log.debug("stopBotReconnect() called, exiting reconnect loop");
-				return;
-			}
-			if (connectAttempts == configuration.getAutoReconnectAttempts()) {
-				throw new IOException("Failed to connect to IRC server(s) after " + connectAttempts + " attempts");
-			}
-
-			//Optionally pause between attempts, useful if network is temporarily down
-			if (configuration.getAutoReconnectDelay() > 0)
+		try {
+			//Begin magic
+			reconnectStopped = false;
+			do {
+				//Try to connect to the server, grabbing any exceptions
+				LinkedHashMap<InetSocketAddress, Exception> connectExceptions = Maps.newLinkedHashMap();
 				try {
-					log.debug("Pausing for {} milliseconds before connecting again", configuration.getAutoReconnectDelay());
-					Thread.sleep(configuration.getAutoReconnectDelay());
-				} catch (InterruptedException e) {
-					throw new RuntimeException("Interrupted while pausing before the next connect attempt", e);
+					connectAttemptTotal++;
+					connectAttempts++;
+					connectExceptions.putAll(connect());
+				} catch (Exception e) {
+					//Initial connect exceptions are returned in the map, this is a more serious error
+					log.error("Exception encountered during connect", e);
+					connectExceptions.put(new InetSocketAddress(serverHostname, serverPort), e);
+
+					if (!configuration.isAutoReconnect())
+						throw new RuntimeException("Exception encountered during connect", e);
+				} finally {
+					if (!connectExceptions.isEmpty())
+						Utils.dispatchEvent(this, new ConnectAttemptFailedEvent(this,
+								configuration.getAutoReconnectAttempts() - connectAttempts,
+								ImmutableMap.copyOf(connectExceptions)));
+
+					//Cleanup if not already called
+					synchronized (stateLock) {
+						if (state != State.DISCONNECTED)
+							shutdown();
+					}
 				}
-		} while (connectAttempts < configuration.getAutoReconnectAttempts());
+
+				//No longer connected to the server
+				if (!configuration.isAutoReconnect())
+					return;
+				if (reconnectStopped) {
+					log.debug("stopBotReconnect() called, exiting reconnect loop");
+					return;
+				}
+				if (connectAttempts == configuration.getAutoReconnectAttempts()) {
+					throw new IOException("Failed to connect to IRC server(s) after " + connectAttempts + " attempts");
+				}
+
+				//Optionally pause between attempts, useful if network is temporarily down
+				if (configuration.getAutoReconnectDelay() > 0)
+					try {
+						log.debug("Pausing for {} milliseconds before connecting again", configuration.getAutoReconnectDelay());
+						Thread.sleep(configuration.getAutoReconnectDelay());
+					} catch (InterruptedException e) {
+						throw new RuntimeException("Interrupted while pausing before the next connect attempt", e);
+					}
+			} while (connectAttempts < configuration.getAutoReconnectAttempts());
+		} catch (Exception ex) {
+			getConfiguration().getListenerManager().onEvent(new ConnectErrorEvent(this, ex));
+		}
 	}
 
 	/**
@@ -354,9 +358,9 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 		//Now that the socket is definitely closed call event, log, and kill the OutputThread
 		shutdown();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return true to continue, false to end
 	 */
 	protected boolean processNextLine() {
@@ -413,7 +417,7 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 			stopBotReconnect();
 			return false;
 		}
-		
+
 		return true;
 	}
 

@@ -7,23 +7,27 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * A command receive to the IRC server from PircBotX
+ * connectError from PircBotX
  *
  * @author KekeWest
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class InputEvent extends Event {
-	private final String rawLine;
+public class ConnectErrorEvent extends Event {
+	private final Exception ex;
 
-	public InputEvent(PircBotX bot, String rawLine) {
+	public ConnectErrorEvent(PircBotX bot, Exception e) {
 		super(bot);
-		this.rawLine = rawLine;
+		this.ex = e;
+	}
+
+	public Exception getException() {
+		return this.ex;
 	}
 
 	/**
 	 * @param response
-	 * @deprecated Cannot respond to input
+	 * @deprecated Cannot respond
 	 */
 	@Override
 	@Deprecated

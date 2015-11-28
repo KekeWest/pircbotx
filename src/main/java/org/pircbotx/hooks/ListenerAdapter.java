@@ -53,6 +53,8 @@ public abstract class ListenerAdapter implements Listener {
 			onConnectAttemptFailed((ConnectAttemptFailedEvent) event);
 		else if (event instanceof DisconnectEvent)
 			onDisconnect((DisconnectEvent) event);
+		else if (event instanceof ConnectErrorEvent)
+			onConnectError((ConnectErrorEvent) event);
 		else if (event instanceof FingerEvent)
 			onFinger((FingerEvent) event);
 		else if (event instanceof HalfOpEvent)
@@ -199,6 +201,9 @@ public abstract class ListenerAdapter implements Listener {
 	}
 
 	public void onDisconnect(DisconnectEvent event) throws Exception {
+	}
+
+	public void onConnectError(ConnectErrorEvent event) throws Exception {
 	}
 
 	public void onException(ExceptionEvent event) throws Exception {
