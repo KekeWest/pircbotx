@@ -36,7 +36,7 @@ import org.pircbotx.hooks.types.*;
  */
 public abstract class ListenerAdapter implements Listener {
 	public void onEvent(Event event) throws Exception {
-		//While reflection would make this significantly shorter, 
+		//While reflection would make this significantly shorter,
 		//nothing beats if statements in performance.
 		//Also polymorphism, while theoretically correct, just means that this code
 		//would be in every single Event and make an explicit dependency on this.
@@ -83,6 +83,8 @@ public abstract class ListenerAdapter implements Listener {
 			onOp((OpEvent) event);
 		else if (event instanceof OutputEvent)
 			onOutput((OutputEvent) event);
+		else if (event instanceof InputEvent)
+			onInput((InputEvent) event);
 		else if (event instanceof OwnerEvent)
 			onOwner((OwnerEvent) event);
 		else if (event instanceof PartEvent)
@@ -153,7 +155,7 @@ public abstract class ListenerAdapter implements Listener {
 			onVoice((VoiceEvent) event);
 		else if (event instanceof WhoisEvent)
 			onWhois((WhoisEvent) event);
-		
+
 		//Exception methods
 		if (event instanceof ExceptionEvent)
 			onException((ExceptionEvent) event);
@@ -248,6 +250,9 @@ public abstract class ListenerAdapter implements Listener {
 	}
 
 	public void onOutput(OutputEvent event) throws Exception {
+	}
+
+	public void onInput(InputEvent event) throws Exception {
 	}
 
 	public void onOwner(OwnerEvent event) throws Exception {
