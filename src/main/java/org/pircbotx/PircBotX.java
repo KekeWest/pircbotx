@@ -17,9 +17,6 @@
  */
 package org.pircbotx;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.primitives.Ints;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -35,6 +32,29 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.lang3.StringUtils;
+import org.pircbotx.dcc.DccHandler;
+import org.pircbotx.exception.IrcException;
+import org.pircbotx.hooks.ListenerAdapter;
+import org.pircbotx.hooks.events.ConnectAttemptFailedEvent;
+import org.pircbotx.hooks.events.ConnectErrorEvent;
+import org.pircbotx.hooks.events.ConnectEvent;
+import org.pircbotx.hooks.events.DisconnectEvent;
+import org.pircbotx.hooks.events.ExceptionEvent;
+import org.pircbotx.hooks.events.InputEvent;
+import org.pircbotx.hooks.events.OutputEvent;
+import org.pircbotx.hooks.events.SocketConnectEvent;
+import org.pircbotx.output.OutputCAP;
+import org.pircbotx.output.OutputDCC;
+import org.pircbotx.output.OutputIRC;
+import org.pircbotx.output.OutputRaw;
+import org.pircbotx.snapshot.UserChannelDaoSnapshot;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Ints;
+
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -42,16 +62,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.pircbotx.dcc.DccHandler;
-import org.pircbotx.exception.IrcException;
-import org.pircbotx.hooks.ListenerAdapter;
-import org.pircbotx.hooks.events.*;
-import org.pircbotx.output.OutputCAP;
-import org.pircbotx.output.OutputDCC;
-import org.pircbotx.output.OutputIRC;
-import org.pircbotx.output.OutputRaw;
-import org.pircbotx.snapshot.UserChannelDaoSnapshot;
 
 /**
  * PircBotX is a Java framework for writing IRC bots quickly and easily.
@@ -229,6 +239,7 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 			} while (connectAttempts < configuration.getAutoReconnectAttempts());
 		} catch (Exception ex) {
 			getConfiguration().getListenerManager().onEvent(new ConnectErrorEvent(this, ex));
+			throw ex;
 		}
 	}
 
@@ -405,6 +416,7 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 		//Start acting the line
 		try {
 			inputParser.handleLine(line);
+			getConfiguration().getListenerManager().onEvent(new InputEvent(this, line));
 		} catch (Exception e) {
 			//Exception in client code. Just log and continue
 			String debug = "Exception encountered when parsing line " + line;
