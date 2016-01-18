@@ -18,11 +18,7 @@
 package org.pircbotx;
 
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -31,11 +27,9 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import javax.net.SocketFactory;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.ToString;
-import lombok.experimental.Accessors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.pircbotx.cap.CapHandler;
 import org.pircbotx.cap.EnableCapHandler;
@@ -56,6 +50,17 @@ import org.pircbotx.output.OutputIRC;
 import org.pircbotx.output.OutputRaw;
 import org.pircbotx.output.OutputUser;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import lombok.Data;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+
 /**
  * Immutable configuration for PircBotX created from
  * {@link Configuration.Builder}
@@ -72,6 +77,7 @@ public class Configuration {
 	protected final InetAddress webIrcAddress;
 	protected final String webIrcPassword;
 	//Bot information
+	protected final Integer settingId;
 	protected final String name;
 	protected final String login;
 	protected final String version;
@@ -176,6 +182,7 @@ public class Configuration {
 		this.webIrcHostname = builder.getWebIrcHostname();
 		this.webIrcAddress = builder.getWebIrcAddress();
 		this.webIrcPassword = builder.getWebIrcPassword();
+		this.settingId = builder.getSettingId();
 		this.name = builder.getName();
 		this.login = builder.getLogin();
 		this.version = builder.getVersion();
@@ -257,6 +264,7 @@ public class Configuration {
 		 */
 		protected String webIrcPassword = null;
 		//Bot information
+		protected Integer settingId = null;
 		/**
 		 * The nick to be used for the IRC connection (nick!login@host), must
 		 * not be blank
@@ -426,7 +434,7 @@ public class Configuration {
 		 */
 		protected String nickservPassword = null;
 		/**
-		 * Case-insensitive message a user with 
+		 * Case-insensitive message a user with
 		 * {@link #setNickservNick(java.lang.String) } in its hostmask will
 		 * always contain when we have successfully identified, defaults to "you
 		 * are now" which which matches all of the following known server
@@ -513,6 +521,7 @@ public class Configuration {
 			this.webIrcHostname = configuration.getWebIrcHostname();
 			this.webIrcAddress = configuration.getWebIrcAddress();
 			this.webIrcPassword = configuration.getWebIrcPassword();
+			this.settingId = configuration.getSettingId();
 			this.name = configuration.getName();
 			this.login = configuration.getLogin();
 			this.version = configuration.getVersion();
@@ -574,6 +583,7 @@ public class Configuration {
 			this.webIrcHostname = otherBuilder.getWebIrcHostname();
 			this.webIrcAddress = otherBuilder.getWebIrcAddress();
 			this.webIrcPassword = otherBuilder.getWebIrcPassword();
+			this.settingId = otherBuilder.getSettingId();
 			this.name = otherBuilder.getName();
 			this.login = otherBuilder.getLogin();
 			this.version = otherBuilder.getVersion();
@@ -721,15 +731,15 @@ public class Configuration {
 			getAutoJoinChannels().put(channel, key);
 			return this;
 		}
-		
+
 		//TODO: Temporary backwards compatibility
 		private void checkSetServerBackwardsCompatible() {
 			if(servers.size() >= 2)
 				throw new RuntimeException("Cannot combine deprecated setServer and addServer");
 		}
-		
+
 		/**
-		 * @deprecated Use {@link #addServer(java.lang.String)},  
+		 * @deprecated Use {@link #addServer(java.lang.String)},
 		 * will be removed in future releases
 		 */
 		@Deprecated
@@ -739,9 +749,9 @@ public class Configuration {
 			servers.add(new ServerEntry(hostname, 6667));
 			return this;
 		}
-		
+
 		/**
-		 * @deprecated Use {@link #addServer(java.lang.String, int)},  
+		 * @deprecated Use {@link #addServer(java.lang.String, int)},
 		 * will be removed in future releases
 		 */
 		@Deprecated
@@ -751,9 +761,9 @@ public class Configuration {
 			servers.add(new ServerEntry(hostname, 6667));
 			return this;
 		}
-		
+
 		/**
-		 * @deprecated Use {@link #addServer(java.lang.String)},  
+		 * @deprecated Use {@link #addServer(java.lang.String)},
 		 * will be removed in future releases
 		 */
 		@Deprecated
@@ -765,9 +775,9 @@ public class Configuration {
 				servers.add(new ServerEntry(hostname, 6667));
 			return this;
 		}
-		
+
 		/**
-		 * @deprecated Use {@link #addServer(java.lang.String, int)},  
+		 * @deprecated Use {@link #addServer(java.lang.String, int)},
 		 * will be removed in future releases
 		 */
 		@Deprecated

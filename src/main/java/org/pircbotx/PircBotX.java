@@ -101,6 +101,8 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 	 */
 	@Getter
 	protected final int botId;
+	@Getter
+	protected final int settingId;
 	//Utility objects
 	/**
 	 * Configuration used for this bot
@@ -160,6 +162,11 @@ public class PircBotX implements Comparable<PircBotX>, Closeable {
 	@SuppressWarnings("unchecked")
 	public PircBotX(@NonNull Configuration configuration) {
 		botId = BOT_COUNT.getAndIncrement();
+		if (configuration.getSettingId() == null) {
+			settingId = botId;
+		} else {
+			settingId = configuration.getSettingId();
+		}
 		this.configuration = configuration;
 		this.nick = configuration.getName();
 

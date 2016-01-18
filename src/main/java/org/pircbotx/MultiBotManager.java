@@ -17,19 +17,8 @@
  */
 package org.pircbotx;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import static com.google.common.util.concurrent.Service.State;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -38,13 +27,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.pircbotx.output.OutputIRC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service.State;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.pircbotx.output.OutputIRC;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Manager that makes connecting and running multiple bots an easy, painless
@@ -69,6 +73,7 @@ public class MultiBotManager {
 	protected final int managerNumber;
 	protected final LinkedHashMap<PircBotX, ListenableFuture<Void>> runningBots = Maps.newLinkedHashMap();
 	protected final BiMap<PircBotX, Integer> runningBotsNumbers = HashBiMap.create();
+	protected final BiMap<PircBotX, Integer> runningBotsSettingIds = HashBiMap.create();
 	protected final Object runningBotsLock = new Object[0];
 	protected final ListeningExecutorService botPool;
 	//Code for starting
@@ -176,14 +181,15 @@ public class MultiBotManager {
 		synchronized (runningBotsLock) {
 			runningBots.put(bot, future);
 			runningBotsNumbers.put(bot, bot.getBotId());
+			runningBotsSettingIds.put(bot, bot.getSettingId());
 		}
 		Futures.addCallback(future, new BotFutureCallback(bot));
 		return future;
 	}
-	
+
 	/**
 	 * Stop with no quit message
-	 * @see #stop(java.lang.String) 
+	 * @see #stop(java.lang.String)
 	 */
 	public void stop() {
 		stop("");
@@ -244,6 +250,12 @@ public class MultiBotManager {
 		return (B) runningBotsNumbers.inverse().get(id);
 	}
 
+	@Synchronized("runningBotsLock")
+	@SuppressWarnings("unchecked")
+	public <B extends PircBotX> B getBotBySettingId(int id) {
+		return (B) runningBotsSettingIds.inverse().get(id);
+	}
+
 	/**
 	 * Called when
 	 *
@@ -286,6 +298,7 @@ public class MultiBotManager {
 			synchronized (runningBotsLock) {
 				runningBots.remove(bot);
 				runningBotsNumbers.remove(bot);
+				runningBotsSettingIds.remove(bot);
 
 				//Change state to TERMINATED if this is the last but to be removed during shutdown
 				if (runningBots.isEmpty() && state == State.STOPPING)
